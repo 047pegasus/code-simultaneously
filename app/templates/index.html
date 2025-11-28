@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Collaborative Code Editor</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='/styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Collaborative Code Editor</h1>
+        
+        <div class="toolbar">
+            <button id="createRoom">Create New Room</button>
+            <input type="text" id="roomId" placeholder="Or enter room ID to join" value="{{ room_id if room_id else '' }}">
+            <button id="joinRoom">Join Room</button>
+            <div id="roomLink" class="room-link"></div>
+        </div>
+        
+        <div class="editor-container">
+            <div id="editor" contenteditable="true" spellcheck="false"></div>
+            <div id="suggestion" class="suggestion"></div>
+        </div>
+        
+        <div class="status" id="status">Not connected to any room</div>
+    </div>
+
+    <script src="{{ url_for('static', path='/app.js') }}"></script>
+</body>
+</html>
