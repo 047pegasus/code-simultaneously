@@ -2,8 +2,9 @@ fastapi==0.103.1
 uvicorn==0.23.2
 websockets==12.0
 python-multipart==0.0.6
-python-jose[cryptography]==3.3.0
-passlib[bcrypt]==1.7.4
 python-dotenv==1.0.0
-sqlalchemy==2.0.20
-alembic==1.12.0
+# Newer SQLAlchemy / Alembic versions to work with Python 3.13
+sqlalchemy>=2.0.34
+alembic>=1.13.2
+# For Postgres, install a driver separately, e.g.:
+#   pip install 'psycopg2-binary>=2.9.9'

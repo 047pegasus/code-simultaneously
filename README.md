@@ -1,14 +1,14 @@
 # Collaborative Code Editor
 
-A real-time collaborative code editor with AI autocomplete suggestions, built with FastAPI and WebSockets.
+Real-time collaborative code editor with AI autocomplete suggestions, built with **FastAPI**, **WebSockets**, and a **PostgreSQL (or SQLAlchemy-compatible) database** for room state.
 
 ## Features
 
-- Create and join rooms for collaborative coding
-- Real-time code synchronization using WebSockets
-- Simple AI-powered code autocomplete
-- In-memory room state management
-- Clean project structure with FastAPI routers
+- **Create & join rooms** via simple room IDs
+- **Real-time code synchronization** using WebSockets (last-write-wins)
+- **Mocked AI autocomplete** with a `/autocomplete` POST endpoint
+- **Room state persisted in a database** via SQLAlchemy models
+- **Clean project structure** with routers, services, and a small frontend
 
 ## Setup
 
@@ -22,25 +22,40 @@ A real-time collaborative code editor with AI autocomplete suggestions, built wi
    ```bash
    pip install -r requirements.txt
    ```
-4. Set up environment variables:
+4. Configure the database URL (PostgreSQL recommended):
    ```bash
-   cp .env.example .env
-   # Edit .env with your database credentials
+   export DATABASE_URL="postgresql+psycopg2://user:password@localhost:5432/collab_db"
    ```
+   If `DATABASE_URL` is not set, the app falls back to a local SQLite file `app.db` for convenience.
 5. Run the application:
    ```bash
    uvicorn app.main:app --reload
    ```
+6. Open the editor UI at:
+   ```text
+   http://localhost:8000/
+   ```
 
-## API Endpoints
+## API & WebSocket Endpoints
 
-- `POST /rooms` - Create a new room
-- `POST /autocomplete` - Get code completion suggestions
-- `GET /room/{room_id}` - Join a room (WebSocket endpoint at `/ws/{room_id}`)
+- `POST /api/rooms`  
+  Creates a new room. Returns:
+  ```json
+  { "roomId": "<uuid>" }
+  ```
 
-## Development
+- `POST /api/autocomplete`  
+  Mocked autocomplete endpoint. Example request body:
+  ```json
+  {
+    "code": "print('hello worl')",
+    "cursorPosition": 18,
+    "language": "python"
+  }
+  ```
 
-To run tests:
-```bash
-pytest
-```
+- `GET /`  
+  Serves the collaborative editor HTML page.
+
+- `WS /ws/{room_id}`  
+  WebSocket endpoint for real-time code updates for the given room.

@@ -91,9 +91,8 @@ h1 {
     line-height: 1.5;
     color: #333;
     outline: none;
-    overflow-y: auto;
-    white-space: pre;
-    tab-size: 4;
+    border: none;
+    resize: none;
 }
 
 /* Suggestion Box */
@@ -127,35 +126,12 @@ h1 {
     .toolbar {
         flex-direction: column;
     }
-    
+
     .toolbar input[type="text"] {
         width: 100%;
     }
-    
+
     .editor-container {
         height: 60vh;
     }
-}
-
-/* Code Highlighting */
-.keyword {
-    color: #d73a49;
-    font-weight: bold;
-}
-
-.string {
-    color: #032f62;
-}
-
-.comment {
-    color: #6a737d;
-    font-style: italic;
-}
-
-.number {
-    color: #005cc5;
-}
-
-.function {
-    color: #6f42c1;
 }
