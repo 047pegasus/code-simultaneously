@@ -25,7 +25,9 @@ class RoomService:
         db = self._create_session()
         try:
             room_id = str(uuid4())
-            doc = Document(id=room_id, name=name or "Untitled Room", content="")
+            doc = Document(
+                id=room_id, name=name or "Untitled Room", content="", version=0
+            )
             db.add(doc)
             db.commit()
             db.refresh(doc)
@@ -33,6 +35,7 @@ class RoomService:
                 "id": doc.id,
                 "name": doc.name,
                 "content": doc.content,
+                "version": doc.version,
                 "created_at": doc.created_at,
             }
         finally:
@@ -45,13 +48,17 @@ class RoomService:
         finally:
             db.close()
 
-    def update_room_content(self, room_id: str, content: str) -> bool:
+    def update_room_content(
+        self, room_id: str, content: str, version: Optional[int] = None
+    ) -> bool:
         db = self._create_session()
         try:
             doc = db.query(Document).filter(Document.id == room_id).first()
             if not doc:
                 return False
             doc.content = content
+            if version is not None:
+                doc.version = version
             db.commit()
             return True
         finally:

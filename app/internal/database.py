@@ -1,8 +1,12 @@
 import os
 
+from dotenv import load_dotenv
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
 
+
+# Load environment variables from a .env file at project root (if present)
+load_dotenv()
 
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./app.db")
 

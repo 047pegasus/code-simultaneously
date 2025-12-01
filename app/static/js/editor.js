@@ -7,6 +7,7 @@ class CodeEditor {
         this.ignoreChanges = false;
         this.lastContent = "";
         this.autocompleteTimer = null;
+        this.version = 0;
 
         this.initializeElements();
         this.initializeEventListeners();
@@ -87,11 +88,16 @@ class CodeEditor {
 
         this.socket.onmessage = (event) => {
             const message = JSON.parse(event.data);
-            if (message.type === "code_sync" || (message.type === "code_update" && message.client_id !== this.clientId)) {
+            if (message.type === "code_sync") {
+                // Full sync of current content + version
                 this.ignoreChanges = true;
                 this.editor.value = message.content;
                 this.lastContent = message.content;
+                this.version = message.version ?? 0;
                 this.ignoreChanges = false;
+            } else if (message.type === "op") {
+                // Apply remote operation locally
+                this.applyRemoteOp(message.op);
             }
         };
 
@@ -108,15 +114,26 @@ class CodeEditor {
         if (this.ignoreChanges) return;
 
         const newContent = this.editor.value;
+        const oldContent = this.lastContent;
         this.lastContent = newContent;
 
         if (this.socket && this.socket.readyState === WebSocket.OPEN) {
-            this.socket.send(
-                JSON.stringify({
-                    type: "code_update",
-                    content: newContent,
-                }),
-            );
+            const op = this.computeOperation(oldContent, newContent);
+            if (op) {
+                const payload = {
+                    type: "op",
+                    op: {
+                        type: op.type,
+                        index: op.index,
+                        length: op.length,
+                        text: op.text,
+                        baseVersion: this.version,
+                    },
+                };
+                this.socket.send(JSON.stringify(payload));
+                // Optimistically advance local version since server won't echo back our own op
+                this.version += 1;
+            }
         }
 
         // Debounced autocomplete
@@ -153,6 +170,78 @@ class CodeEditor {
             console.error("Error getting autocomplete:", error);
             this.hideSuggestion();
         }
+    }
+
+    // --- OT helpers on the client side ---
+
+    computeOperation(oldText, newText) {
+        if (oldText === newText) return null;
+
+        // Find common prefix
+        let start = 0;
+        while (
+            start < oldText.length &&
+            start < newText.length &&
+            oldText[start] === newText[start]
+        ) {
+            start++;
+        }
+
+        // Find common suffix
+        let oldEnd = oldText.length;
+        let newEnd = newText.length;
+        while (
+            oldEnd > start &&
+            newEnd > start &&
+            oldText[oldEnd - 1] === newText[newEnd - 1]
+        ) {
+            oldEnd--;
+            newEnd--;
+        }
+
+        const removed = oldText.slice(start, oldEnd);
+        const added = newText.slice(start, newEnd);
+
+        if (removed && !added) {
+            // Pure delete
+            return { type: "delete", index: start, length: removed.length, text: "" };
+        }
+        if (!removed && added) {
+            // Pure insert
+            return { type: "insert", index: start, length: 0, text: added };
+        }
+        // Replace
+        return {
+            type: "replace",
+            index: start,
+            length: removed.length,
+            text: added,
+        };
+    }
+
+    applyRemoteOp(op) {
+        if (!op) return;
+
+        const current = this.editor.value;
+        let result = current;
+
+        if (op.type === "insert") {
+            result = current.slice(0, op.index) + op.text + current.slice(op.index);
+        } else if (op.type === "delete") {
+            result =
+                current.slice(0, op.index) + current.slice(op.index + op.length);
+        } else if (op.type === "replace") {
+            result =
+                current.slice(0, op.index) +
+                op.text +
+                current.slice(op.index + op.length);
+        }
+
+        this.ignoreChanges = true;
+        this.editor.value = result;
+        this.lastContent = result;
+        this.version = op.baseVersion ?? this.version + 1;
+        this.ignoreChanges = false;
     }
 
     showSuggestion(suggestion) {

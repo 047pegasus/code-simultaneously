@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import Column, DateTime, String, Text
+from sqlalchemy import Column, DateTime, Integer, String, Text
 
 from ..internal.database import Base
 
@@ -17,4 +17,5 @@ class Document(Base):
     id = Column(String, primary_key=True, index=True)
     name = Column(String, nullable=False)
     content = Column(Text, nullable=False, default="")
+    version = Column(Integer, nullable=False, default=0)
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
